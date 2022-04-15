@@ -1,0 +1,8 @@
+"Note: This is not an official Federal Reserve statistical release. Because this is a staff research product and not an official statistical release, it is subject to delay, revision, or methodological changes without advance notice."
+
+Series,Compounding Convention,Mnemonic(s)
+Zero-coupon yield,Continuously Compounded,SVENYXX
+Par yield,Coupon-Equivalent,SVENPYXX
+Instantaneous forward rate,Continuously Compounded,SVENFXX
+One-year forward rate,Coupon-Equivalent,SVEN1FXX
+Parameters,N/A,BETA0 to TAU2
