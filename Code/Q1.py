@@ -13,16 +13,21 @@ import numpy as np
 import warnings 
 warnings.filterwarnings("ignore")
 
+# Make this whatever code directory you're in, with data stored in ../Data/
 Directory = "/Users/sam/Documents/UC Berkeley/Classes/Second Year/Spring/Empirical Asset Pricing/Part 2/HW2/PHD239FC-PS2-tugendhaft-/Code/"
 os.chdir(Directory)
 
 
 # Part a
+
+# Load data
 feds = pd.read_csv("../Data/feds200628.csv") 
 fama_bliss = pd.read_csv("../Data/fama-bliss-yields.csv") 
 
-epsilon = 1e-12
 
+epsilon = 1e-12 # If interest rates are negative or 0, make them epsilon
+
+# Fama Bliss yields are not in log terms, put them in log terms and then annualize and put in percent
 for column in fama_bliss:
     if column == 'Date':
         continue
@@ -31,10 +36,10 @@ for column in fama_bliss:
     fama_bliss[column] = 1200*np.log(1+fama_bliss[column]/12)
     
 
-feds = feds[['Date','SVENY01','SVENY02','SVENY04','SVENY10']]
-# one_month_yield = fama_bliss[['Date','y1']]
-one_month_yield = fama_bliss
+feds = feds[['Date','SVENY01','SVENY02','SVENY04','SVENY10']] # grab relevant yields
+one_month_yield = fama_bliss # copy dataframe so don't overwrite
 
+# Create month and year variables to merge on, keep end of month observation
 feds = feds.dropna()
 feds['Month'] = pd.DatetimeIndex(feds['Date']).month
 feds['last_obs_in_month'] = feds.Month != feds.Month.shift(-1)
@@ -43,18 +48,20 @@ feds = feds.reset_index().drop(['index'],axis = 1)
 feds['Year'] = pd.DatetimeIndex(feds['Date']).year
 feds = feds.drop(['last_obs_in_month','Date'], axis=1)
 
+# Create month and year variables to merge on
 one_month_yield['Date'] = pd.to_datetime(one_month_yield['Date'], format='%Y%m%d')
 one_month_yield['Month'] = pd.DatetimeIndex(one_month_yield['Date']).month
 one_month_yield['Year'] = pd.DatetimeIndex(one_month_yield['Date']).year
 one_month_yield = one_month_yield.drop(['Date'], axis=1)
 
-
+# Merge data
 df = pd.merge(left=feds, right=one_month_yield, left_on=['Year','Month'], right_on=['Year','Month'])
 
+# Keep data between 1985-2015
 df = df[df['Year'].between(1985,2015, inclusive=True)]
 
 
-
+# Calculate variables from CLM Table 10.2
 df['ER1'] = df['SVENY01'] - df['y1'] - 11*(df['SVENY01'].shift(-1)-df['SVENY01'])
 
 df['ER2'] = df['SVENY02'] - df['y1'] - 23*(df['SVENY02'].shift(-1)-df['SVENY02'])
@@ -63,6 +70,8 @@ df['ER4'] = df['SVENY04'] - df['y1'] - 47*(df['SVENY04'].shift(-1)-df['SVENY04']
 
 df['ER10'] = df['SVENY10'] - df['y1'] - 119* (df['SVENY10'].shift(-1)-df['SVENY10'])
 
+# Simple return = exp(return) = exp(excess return + 1-month-yield)
+# Need to divide by 100 to go from percent to decimal
 df['simple1'] = np.exp((df['ER1']+df['y1'])/100)
 df['simple2'] = np.exp((df['ER2']+df['y1'])/100)
 df['simple4'] = np.exp((df['ER4']+df['y1'])/100)
@@ -78,7 +87,10 @@ df['Spread2'] = df['SVENY02'] - df['y1']
 df['Spread4'] = df['SVENY04'] - df['y1']
 df['Spread10'] = df['SVENY10'] - df['y1']
 
+# Create summary statistics table
 df_sumstats = df.describe().loc[["mean", "std"]].T
+
+# Take the log of the average simple returns
 df_sumstats = df_sumstats.tail(16)
 for i in range(4):
     df_sumstats['mean'][i+4] = 100*np.log(df_sumstats['mean'][i+4])
@@ -93,12 +105,14 @@ Month0 = 1
 Yearend = 2015
 Monthend = 12
 
+# Keep data in fama bliss in the relevent years (1985-2015)
 idx0 = fama_bliss.index[(fama_bliss['Year']==Year0) & (fama_bliss['Month'] == Month0)].values[0]
 idxend = fama_bliss.index[(fama_bliss['Year']==Yearend) & (fama_bliss['Month'] == Monthend)].values[0]
-
 fama_bliss = fama_bliss.loc[idx0:idxend+1,:]
 fama_bliss = fama_bliss.reset_index().drop(['index'],axis = 1) 
 
+
+# Create variables from CLM
 fama_bliss['ER1'] = fama_bliss['y12'] - fama_bliss['y1'] - 11*(fama_bliss['y11'].shift(-1)-fama_bliss['y12'])
 
 fama_bliss['ER2'] = fama_bliss['y24'] - fama_bliss['y1'] - 23*(fama_bliss['y23'].shift(-1)-fama_bliss['y24'])
@@ -128,8 +142,10 @@ fama_bliss['Spread4'] = fama_bliss['y48'] - fama_bliss['y1']
 fama_bliss['Spread10'] = fama_bliss['y120'] - fama_bliss['y1']
 
 
-
+# Create summary statistics table
 fb_sumstats = fama_bliss.describe().loc[["mean", "std"]].T
+
+# Replace simple returns with log of average simple return
 fb_sumstats = fb_sumstats.tail(20)
 for i in range(4):
     fb_sumstats['mean'][i+4] = 100*np.log(fb_sumstats['mean'][i+4])
