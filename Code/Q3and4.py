@@ -150,7 +150,7 @@ for i in range(T):
         # discounted continuation value
         continue_val = (.5*(pu+pd))/(1+r_tree[j,T-i-1])
         # price today is equal to the scheduled principal payment plus principal outstanding if mortgage is prepayed, otherwise it's plus the continuation value if they don't prepay
-        Price_PO[j,T-i-1] = Principal_schedule[T-i-1]+ Exercise[j,i]*Principal(i+1) + (1-Exercise[j,i])*continue_val
+        Price_PO[j,T-i-1] = Principal_schedule[T-i-1]+ Exercise[j,T-i-1]*Principal(i+1) + (1-Exercise[j,T-i-1])*continue_val
 
 # Grab value of Principal Only Security    
 P0_PO = Price_PO[0,0]
